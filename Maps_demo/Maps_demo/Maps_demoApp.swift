@@ -9,6 +9,9 @@ import SwiftUI
 
 @main
 struct Maps_demoApp: App {
+    
+    @UIApplicationDelegateAdaptor private var appDelegate:ApplicationDelegate
+    
     var body: some Scene {
         WindowGroup {
             ContentView()

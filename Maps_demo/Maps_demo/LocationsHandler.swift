@@ -40,7 +40,7 @@ fileprivate let logger = createLogger(subsystem: "Workers", category: "Locations
         }
     }
     
-    private func startLocationUpdates() {
+    func startLocationUpdates() {
         switch locationManager.authorizationStatus {
             
         case .notDetermined:

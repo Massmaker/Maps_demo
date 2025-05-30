@@ -14,7 +14,7 @@ struct Maps_demoApp: App {
     
     var body: some Scene {
         WindowGroup {
-            RootView(viewModel: RootModel())
+            RootView(viewModel: RootModel(locationsHandler: LocationsHandler.instance))
         }
     }
 }

@@ -12,6 +12,17 @@ final class ApplicationDelegate: NSObject, UIApplicationDelegate, ObservableObje
     
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey : Any]? = nil) -> Bool {
         logger.notice(#function)
+        
+        let handler = LocationsHandler.instance
+        if handler.updatesStarted {
+            handler.startLocationUpdates()
+        }
+        
+        if handler.backgroundActivity {
+            handler.backgroundActivity = true
+        }
+        
+        
         return true
     }
 }

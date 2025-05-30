@@ -22,6 +22,9 @@ struct RootView: View {
                 
             }
         }
+        .onAppear{
+            viewModel.onRootViewAppear()
+        }
     }
 }
 

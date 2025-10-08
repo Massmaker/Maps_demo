@@ -16,15 +16,23 @@ fileprivate let logger = createLogger(subsystem: "Workers", category: "Locations
 
 @Observable
 @MainActor class LocationsHandler:NSObject {
+    
     static let instance:LocationsHandler = .init()
     private var backgroundActivitySession:CLBackgroundActivitySession?
     
     private let locationManager:CLLocationManager
+    var lastCoordinates:CLLocationCoordinate2D? {
+        self.lastLocation?.coordinate
+    }
+    var lastLocation:CLLocation?
+    var speedMetersPerSecond:Double = 0
     
     private override init() {
         locationManager = CLLocationManager()
         super.init()
-//        locationManager.delegate = self
+        
+        locationManager.desiredAccuracy = kCLLocationAccuracyBest
+        
     }
     
     var updatesStarted:Bool = UserDefaults.standard.bool(forKey: kLiveUpdatesStartedKey) {
@@ -63,14 +71,36 @@ fileprivate let logger = createLogger(subsystem: "Workers", category: "Locations
                 self.updatesStarted = true
                 
                 for try await update in updates {
-                    if !self.updatesStarted{
+                    if !self.updatesStarted {
                         break
                     }
+                    
+                    if #available(iOS 18, *) {
+                        if update.authorizationDenied {
+                            if update.authorizationDeniedGlobally {
+                                logger.warning("Location Authorization Denied on system level")
+                                break
+                            }
+                            logger.warning("Location Authorization Denied by user")
+                            break
+                        }
+                    }
+                    
                     guard let loc = update.location else {continue}
                     
                     let mps = loc.speed
-                    let coords = loc.coordinate
-                    //TODO: report the updates to clients
+                    
+                    self.lastLocation = loc
+                    self.speedMetersPerSecond = mps
+                    
+                    // try to deal with more accurate user's location coordinates
+                    let currentAccuracy = loc.horizontalAccuracy
+                    
+                    if let previousLoc = self.lastLocation, mps <= 1.0 {
+                        if previousLoc.horizontalAccuracy > currentAccuracy {
+                            self.lastLocation = loc
+                        }
+                    }
                 }
             }
             catch{
@@ -79,7 +109,7 @@ fileprivate let logger = createLogger(subsystem: "Workers", category: "Locations
         }
     }
     
-    func stopLocationUpdates(){
+    func stopLocationUpdates() {
         self.updatesStarted = false
         self.backgroundActivity = false
     }
@@ -88,32 +118,3 @@ fileprivate let logger = createLogger(subsystem: "Workers", category: "Locations
         locationManager.requestAlwaysAuthorization()
     }
 }
-
-
-//extension LocationsHandler:CLLocationManagerDelegate {
-//    func locationManager(_ manager: CLLocationManager, didUpdateHeading newHeading: CLHeading) {
-//        
-//    }
-//    
-//    func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
-//        
-//    }
-//    
-//    func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
-//        switch manager.authorizationStatus {
-//            
-//        case .notDetermined:
-//            startRequestingPermissions()
-//        case .restricted:
-//            
-//        case .denied:
-//            
-//        case .authorizedAlways:
-//            
-//        case .authorizedWhenInUse:
-//            
-//        @unknown default:
-//            fatalError("Unhandled Location Auth state")
-//        }
-//    }
-//}

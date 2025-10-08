@@ -10,13 +10,17 @@ import Observation
 @Observable
 @MainActor
 class RootModel {
-    private weak var locationsHandler:LocationsHandler?
     var navigationState:RootNavigationState = .maps
     var isMenuOpen:Bool = false
     var geoData:Geodata = .init()
     
-    init(locationsHandler lHandler:LocationsHandler) {
-        self.locationsHandler = lHandler
+    weak var locationsHandler:LocationsHandler?
+    var areaResolver: any GeocodingAreaResolver
+    
+    
+    init(locationsHandler locHandler:LocationsHandler, geocodingService: any GeocodingAreaResolver) {
+        self.locationsHandler = locHandler
+        self.areaResolver = geocodingService
     }
     
     func onRootViewAppear() {
@@ -27,13 +31,13 @@ class RootModel {
 
 extension RootModel {
     static var dummyWithMenu:RootModel {
-        let model = RootModel(locationsHandler: .instance)
+        let model = RootModel(locationsHandler: .instance, geocodingService: GeocodingAreaResolverDummy())
         model.isMenuOpen = true
         return model
     }
     
     static var dummyNoMenu:RootModel {
-        let model = RootModel(locationsHandler: .instance)
+        let model = RootModel(locationsHandler: .instance, geocodingService: GeocodingAreaResolverDummy())
         return model
     }
 }
